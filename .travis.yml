@@ -238,21 +238,23 @@ jobs:
       - cat ~/.keptn/keptn-installer.log
       - cat ~/.keptn/keptn-installer-err.log
 
-  # all commits (including external pull requests) should run basic tests for the CLI (if anything has changed)
-  - stage: CLI tests
-    os: osx # ToDo: cli tests fail for os: linux
+  # always spellcheck all directories
+  - stage: spellcheck
+    services: []
+    if: type == push
+    language: go
+    go:
+      - 1.12.x
+    before_script:
+      - go get -u github.com/client9/misspell/cmd/misspell
     script:
-    - |
-      if [[ $CHANGED_FILES == *"${CLI_FOLDER}"*  ]]; then
-        echo "Testing keptn CLI on osx"
-        cd ./cli
-        go test ./...
-      fi
+      - misspell -error -locale US .
 
   # always check code style for all directories
   - stage: codestyle
     # Check Codestyle using go fmt
     services: []
+    if: type == push
     language: go
     go:
       - 1.12.x
@@ -268,6 +270,17 @@ jobs:
           echo "After that amend your commit (e.g.: git add ${unformatted} && git commit --amend --no-edit) and force push the changes (git push -f)."
           travis_terminate 1
         fi
+
+  # all commits (including external pull requests) should run basic tests for the CLI (if anything has changed)
+  - stage: CLI tests
+    os: osx # ToDo: cli tests fail for os: linux
+    script:
+    - |
+      if [[ $CHANGED_FILES == *"${CLI_FOLDER}"*  ]]; then
+        echo "Testing keptn CLI on osx"
+        cd ./cli
+        go test ./...
+      fi
 
     # always execute unit tests for all directories
   - stage: Unit tests
